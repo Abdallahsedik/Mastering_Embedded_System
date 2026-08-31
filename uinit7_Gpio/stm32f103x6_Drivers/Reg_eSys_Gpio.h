@@ -70,5 +70,12 @@ typedef struct
 #define GPIOD_REG               ((Gpio_RegisterType *)GPIOD_BASE)
 
 
+static Gpio_RegisterType* const Port_GpioLookup[4] =
+{
+    GPIOA_REG,   /* PORTA_IDX = 0 */
+    GPIOB_REG,   /* PORTB_IDX = 1 */
+    GPIOC_REG,   /* PORTC_IDX = 2 */
+    GPIOD_REG    /* PORTD_IDX = 3 */
+};
 
 #endif /* REG_ESYS_GPIO_H_ */
