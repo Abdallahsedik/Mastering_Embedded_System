@@ -23,8 +23,8 @@ Sw Version      : 1.0.0
 /*==================================================================================================
 *                               SOURCE FILE VERSION INFORMATION
 ==================================================================================================*/
-#define PORT_VENDOR_ID              43U      /* fake id number  — real AUTOSAR assigns vendor IDs officially */
-#define PORT_MODULE_ID              124U     /* AUTOSAR-standard module ID for PORT is 124 */
+#define PORT_VENDOR_ID              43U      /* fake id number   */
+#define PORT_MODULE_ID              124U
 
 #define PORT_SW_MAJOR_VERSION       1U
 #define PORT_SW_MINOR_VERSION       0U
@@ -35,31 +35,9 @@ Sw Version      : 1.0.0
 
 #include "Port.h"
 
-
-/*==================================================================================================
- *                                       LOCAL MACROS AND DEFINITIONS
- ==================================================================================================*/
-
-#define PORT_PIN_ID(PortIdx, PinNum)   ((Port_PinType)(((PortIdx) << 4U) | (PinNum)))
-
-#define PORT_GET_PORT_IDX(PinId)       ((uint8)(((PinId) >> 4U) & 0x0FU))
-#define PORT_GET_PIN_NUM(PinId)        ((uint8)((PinId) & 0x0FU))
-
-/*==================================================================================================
- *                                       LOCAL DATA AND CONSTANTS
- ==================================================================================================*/
-/* Index = Port_PinModeType value. Value = packed CNF[1:0]:MODE[1:0] nibble.
-   MODE bits fixed at speed=01 (10MHz) for all outputs; PU/PD ODR handled separately. */
-static const uint8 Port_ModeToCr[8] =
+Gpio_RegisterType* const Gpio_PortLuk[4] =
 {
-    /* PORT_PIN_MODE_ANALOG      */ 0x0U,   /* CNF=00 MODE=00 */
-    /* PORT_PIN_MODE_INPUT_FLOAT */ 0x4U,   /* CNF=01 MODE=00 */
-    /* PORT_PIN_MODE_INPUT_PU    */ 0x8U,   /* CNF=10 MODE=00 */
-    /* PORT_PIN_MODE_INPUT_PD    */ 0x8U,   /* CNF=10 MODE=00 (same as PU, ODR sets which) */
-    /* PORT_PIN_MODE_OUTPUT_PP   */ 0x1U,   /* CNF=00 MODE=01 */
-    /* PORT_PIN_MODE_OUTPUT_OD   */ 0x5U,   /* CNF=01 MODE=01 */
-    /* PORT_PIN_MODE_AF_PP       */ 0x9U,   /* CNF=10 MODE=01 */
-    /* PORT_PIN_MODE_AF_OD       */ 0xDU    /* CNF=11 MODE=01 */
+    GPIOA_REG, GPIOB_REG, GPIOC_REG, GPIOD_REG
 };
 
 
@@ -77,7 +55,47 @@ static const uint8 Port_ModeToCr[8] =
  * Return value:     None
  * Description: Initializes the Port Driver module.
 */
-//void Port_Init ( const Port_ConfigType* ConfigPtr ){}
+void Port_Init(const Port_ConfigType* ConfigPtr)
+{
+    uint8 i;
+
+    if (ConfigPtr == NULL_PTR)
+    {
+        return;
+    }
+
+    for (i = 0u; i < ConfigPtr->NumberOfPins; i++)
+    {
+        const Port_ConfigPinType* pinCfg = &ConfigPtr->Pins[i];
+
+        Port_SetPinMode(pinCfg->Port_Num, pinCfg->Pin_Num, pinCfg->Mode);
+        Port_SetPinDirection(pinCfg->Port_Num, pinCfg->Pin_Num, pinCfg->Direction);
+
+        Gpio_RegisterType* port = Gpio_PortLuk[pinCfg->Port_Num];
+
+        if (pinCfg->Direction == PORT_PIN_OUT)
+        {
+
+            if (pinCfg->InitialValue == STD_HIGH)
+            {
+                port->BSRR = (uint32)(1UL << pinCfg->Pin_Num);          /* atomic set */
+            }
+            else
+            {
+                port->BSRR = (uint32)(1UL << (pinCfg->Pin_Num + 16u));  /* atomic reset */
+            }
+        }
+
+        if (pinCfg->Mode == PORT_PIN_MODE_INPUT_PU_PD)
+        {
+
+            if (pinCfg->InitialValue == STD_HIGH)
+                port->BSRR = (uint32)(1UL << pinCfg->Pin_Num);            /* ODR=1 → pull-up   */
+            else
+                port->BSRR = (uint32)(1UL << (pinCfg->Pin_Num + 16u));    /* ODR=0 → pull-down */
+        }
+    }
+}
 
 
 /*
@@ -93,24 +111,35 @@ static const uint8 Port_ModeToCr[8] =
  * Description: Sets the port pin direction
 */
 #if (PORT_SET_PIN_DIRECTION_API == STD_ON)
-void Port_SetPinDirection(Port_PinType Pin,Port_PinDirectionType Direction)
+void Port_SetPinDirection(uint8 Gpiox, Port_PinType PinNum, Port_PinDirectionType dir)
 {
+	if ((Gpiox > GPIOD_ID) || (PinNum > PIN15) || (dir > PORT_PIN_OUT))
+	    {
+	        return;
+	    }
+	Gpio_RegisterType* port= Gpio_PortLuk[Gpiox];
+    volatile uint32* reg =NULL_PTR;
+    uint8 shift =0;
 
-		 uint8 portIdx = PORT_GET_PORT_IDX(Pin);
-		 uint8 pinNum  = PORT_GET_PIN_NUM(Pin);
-
-	      Gpio_RegisterType* gpio = Port_GpioLookup[portIdx];   // one array index, no switch
-	      volatile uint32* cr = (pinNum < 8U) ? &gpio->CRL : &gpio->CRH; //decide which one of them should used (CRL vs CRH)
-	      uint8 pos = (uint8)((pinNum & 0x07U) * 4U);
-
-	      *cr &= ~(0x3UL << pos);                 // clear MODE bits only, keep CNF
-
-	      if (Direction == PORT_PIN_OUT)
-	      {
-	          *cr |= (0x1UL << pos);              // MODE=01 (10MHz default)
-	      }
+    if (PinNum < PIN8)
+    {
+        reg   = &port->CRL;
+        shift = (uint8)(PinNum * 4u);
+    }
+    else
+    {
+        reg   = &port->CRH;
+        shift = (uint8)((PinNum - 8u) * 4u);
+    }
+    if (reg == NULL_PTR)
+       {
+           return;
+       }
+    *reg = (uint32)((*reg & ~(GPIO_FIELD_MASK_2BIT << shift))
+                     | (((uint32)dir & GPIO_FIELD_MASK_2BIT) << shift));
 }
 #endif
+
 
 /*
  * Service name: Port_SetPinMode
@@ -123,28 +152,38 @@ void Port_SetPinDirection(Port_PinType Pin,Port_PinDirectionType Direction)
  * Parameters (out):    None
  * Return value:        None
  * Description: Sets the port pin mode.
-*/
+ */
 #if (PORT_SET_PIN_MODE_API == STD_ON)
-void Port_SetPinMode(Port_PinType Pin,Port_PinModeType Mode)
+void Port_SetPinMode(uint8 Gpiox, Port_PinType PinNum, Port_PinModeType Mode)
 {
-	 	uint8 portIdx = PORT_GET_PORT_IDX(Pin);
-	    uint8 pinNum  = PORT_GET_PIN_NUM(Pin);
-
-	    Gpio_RegisterType* gpio = Port_GpioLookup[portIdx];
-	    volatile uint32* cr = (pinNum < 8U) ? &gpio->CRL : &gpio->CRH;
-	    uint8 pos = (uint8)((pinNum & 0x07U) * 4U);
-
-	    *cr &= ~(0xFUL << pos);                          // clear full CNF+MODE nibble (4 bits, not 2)
-	    *cr |= ((uint32)Port_ModeToCr[Mode] << pos);      // OR in looked-up pattern
-
-	    if (Mode == PORT_PIN_MODE_INPUT_PU)
+	 if ((Gpiox > GPIOD_ID) || (PinNum > PIN15) || (Mode > PORT_PIN_MODE_AF_OD))
 	    {
-	        gpio->ODR |= (1UL << pinNum);                 // pull-up: ODR=1
+	        return;
 	    }
-	    else if (Mode == PORT_PIN_MODE_INPUT_PD)
-	    {
-	        gpio->ODR &= ~(1UL << pinNum);                // pull-down: ODR=0
-	    }
+
+    Gpio_RegisterType* port      =  Gpio_PortLuk[Gpiox];
+    volatile uint32* reg    = NULL_PTR;
+    uint8 shift=0;
+
+
+    if (PinNum < PIN8)
+    {
+        reg   = &port->CRL;
+        shift = (uint8)((PinNum * 4u) + 2u);
+    }
+    else
+    {
+        reg   = &port->CRH;
+        shift = (uint8)(((PinNum - 8u) * 4u) + 2u);
+    }
+
+    if (reg == NULL_PTR)
+    {
+        return;
+    }
+
+    *reg = (uint32)((*reg & ~(GPIO_FIELD_MASK_2BIT << shift))
+                     | (((uint32)Mode & GPIO_FIELD_MASK_2BIT) << shift));
 }
 #endif
 /*
@@ -169,7 +208,5 @@ void Port_GetVersionInfo(Std_VersionInfoType* versioninfo)
         versioninfo->sw_minor_version = PORT_SW_MINOR_VERSION;
         versioninfo->sw_patch_version = PORT_SW_PATCH_VERSION;
     }
-    /* else: DET error PORT_E_PARAM_POINTER, if Det is enabled */
 }
-
 #endif

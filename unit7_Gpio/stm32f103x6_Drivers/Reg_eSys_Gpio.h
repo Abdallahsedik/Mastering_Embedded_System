@@ -27,7 +27,7 @@ Sw Version      : 1.0.0
 /*==================================================================================================
  *                                       INCLUDES
 ==================================================================================================*/
-#include "Platform_types.h"
+#include "Std_Types.h"
 
 
 /*==================================================================================================*
@@ -57,7 +57,6 @@ typedef struct
 	volatile uint32 LCKR;
 } Gpio_RegisterType;
 
-
 /*==================================================================================================*
  *                                       Peripheral Instants
  *==================================================================================================*/
@@ -70,12 +69,7 @@ typedef struct
 #define GPIOD_REG               ((Gpio_RegisterType *)GPIOD_BASE)
 
 
-static Gpio_RegisterType* const Port_GpioLookup[4] =
-{
-    GPIOA_REG,   /* PORTA_IDX = 0 */
-    GPIOB_REG,   /* PORTB_IDX = 1 */
-    GPIOC_REG,   /* PORTC_IDX = 2 */
-    GPIOD_REG    /* PORTD_IDX = 3 */
-};
+/*---------   * GPIO Instants * ------------------*/
+extern Gpio_RegisterType* const Gpio_PortLuk[4];
 
 #endif /* REG_ESYS_GPIO_H_ */

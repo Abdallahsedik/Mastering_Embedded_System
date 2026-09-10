@@ -22,8 +22,26 @@ Sw Version      : 1.0.0
 #ifndef STD_TYPES_H_
 #define STD_TYPES_H_
 
+#include "Platform_types.h"
+
+#ifndef STD_ON
+#define STD_ON   1u
+#endif
+
+#ifndef STD_OFF
+#define STD_OFF  0u
+#endif
+
 #ifndef NULL_PTR
 #define NULL_PTR ((void *)0)
+#endif
+
+#ifndef STD_LOW
+#define STD_LOW     0x00U
+#endif
+
+#ifndef STD_HIGH
+#define STD_HIGH    0x01U
 #endif
 
 typedef struct
