@@ -24,9 +24,9 @@ Sw Version      : 1.0.0
 #define MCU_CFG_H_
 
 /*SYS_CLK_SRC Options: HSI, HSE, PLL*/
-#define SYS_CLK_SRC     HSI
+//#define SYS_CLK_SRC     HSI
 /*BYPASS_MODE Options: BYPASSED, NOT_BYPASSED*/
-#define HSE_BYPASS_MODE      NOT_BYPASSED
+//#define HSE_BYPASS_MODE      NOT_BYPASSED
 
 
 #endif /* MCU_CFG_H_ */

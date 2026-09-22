@@ -65,18 +65,73 @@ typedef struct
  *                                       Bits Configuration
  *==================================================================================================*/
 
-#define HSION                    0
-#define HSEON                    16
-#define PLLON                    24
-#define HSEBYP                   18
+/* RCC->CR bit positions */
+#define HSION                    0u
+#define HSEON                    16u
+#define PLLON                    24u
+#define HSEBYP                   18u
 
-#define HSIRDY                   1
-#define HSERDY                   17
-#define PLLRDY                   25
+#define HSIRDY                   1u
+#define HSERDY                   17u
+#define PLLRDY                   25u
+
+/*CFGR  BITS*/
+#define SW0                     0
+#define SW1                     1
+#define SWS_MASK 				0x3uL
+#define SWS_POS   				2uL
+
+/* RCC->CFGR bit positions */
+#define PLLSRC     16u
+#define PLLXTPRE   17u
+#define PLLMUL_pos 18u
+#define PLLMUL_MASK (0xFuL << PLLMUL_pos)
+
+#define SWS_MASK 			0x3uL
+#define SWS_POS   			2uL
 
 
-#define SW0                      0
-#define SW1                      1
+/*Bits 13:11 PPRE2: APB high-speed prescaler (APB2)
+Set and cleared by software to control the division factor of the APB high-speed clock (PCLK2).
+0xx: HCLK not divided
+100: HCLK divided by 2
+101: HCLK divided by 4
+110: HCLK divided by 8
+111: HCLK divided by 16*/
+
+/*
+ *
+ *
+Bits 10:8 PPRE1: APB low-speed prescaler (APB1)
+Set and cleared by software to control the division factor of the APB low-speed clock
+(PCLK1).
+Warning: the software has to set correctly these bits to not exceed 36 MHz on this domain.
+0xx: HCLK not divided
+100: HCLK divided by 2
+101: HCLK divided by 4
+110: HCLK divided by 8
+111: HCLK divided by 16
+*/
+
+/*
+Bits 7:4 HPRE: AHB prescaler
+Set and cleared by software to control the division factor of the AHB clock.
+0xxx: SYSCLK not divided
+1000: SYSCLK divided by 2
+1001: SYSCLK divided by 4
+1010: SYSCLK divided by 8
+1011: SYSCLK divided by 16
+1100: SYSCLK divided by 64
+1101: SYSCLK divided by 128
+1110: SYSCLK divided by 256
+1111: SYSCLK divided by 512*/
+
+#define RCC_CFGR_HPRE_POS    4uL
+#define RCC_CFGR_HPRE_MASK  (0xFuL << RCC_CFGR_HPRE_POS)
+#define RCC_CFGR_PPRE1_POS   8uL
+#define RCC_CFGR_PPRE1_MASK (0x7uL << RCC_CFGR_PPRE1_POS)
+#define RCC_CFGR_PPRE2_POS  11uL
+#define RCC_CFGR_PPRE2_MASK (0x7uL << RCC_CFGR_PPRE2_POS)
 
 
 #endif /* REG_ESYS_RCC_H_ */
