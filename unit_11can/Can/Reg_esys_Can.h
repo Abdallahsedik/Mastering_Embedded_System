@@ -1,12 +1,38 @@
-/*
- * Reg_esys_Can.h
- *
- *  Created on: Oct 4, 2026
- *      Author: pc
- */
+/*************************************************************************************************************************************
+@file           Reg_eSys_Can.h
+@version        1.0.0
+@brief          Register Definitions for CAN (STM32F103X6).
+@details        Provides register abstraction layer definitions for the CAN peripheral on
+                the STM32F103X6 MCU. Contains base addresses, register offset definitions,
+                bit mapping and bit-field masks used by the CAN driver to access the hardware
+                registers in a hardware-independent manner.
+@author         abdallah mohamed sedik
+*************************************************************************************************************************************/
+
+/*************************************************************************************************************************************
+Project         : AUTOSAR 4.4.0 MCAL
+Platform        : ARM Cortex-M3
+MCU             : STM32F103X6
+Package         : LQFP48
+Module          : Reg_eSys_Can
+Autosar Version : 4.4.0
+Vendor Release  : R24-11
+Autosar Revision: ASR_REL_4_4_REV_0000
+Sw Version      : 1.0.0
+*************************************************************************************************************************************/
 
 #ifndef CAN_REG_ESYS_H_
 #define CAN_REG_ESYS_H_
+
+/*==================================================================================================
+*                               SOURCE FILE VERSION INFORMATION
+==================================================================================================*/
+#define REG_ESYS_CAN_VENDOR_ID              43U      /* fake id number */
+#define REG_ESYS_CAN_MODULE_ID              121U
+
+#define REG_ESYS_CAN_SW_MAJOR_VERSION       1U
+#define REG_ESYS_CAN_SW_MINOR_VERSION       0U
+#define REG_ESYS_CAN_SW_PATCH_VERSION       0U
 
 /*register definitions*/
 /*==================================================================================================
@@ -92,4 +118,7 @@ typedef struct
 
 #define CAN_BTR_LBKM    (1u<<30)
 #define CAN_BTR_SILM    (1u<<31)
+#define CAN_RIR_IDE   ((uint32)0x00000004) /* Bit 2 */
 #endif /* CAN_REG_ESYS_H_ */
+
+
